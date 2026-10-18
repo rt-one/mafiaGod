@@ -14,6 +14,13 @@ import { FONTS, globalStyles } from '../styles/theme';
 import { useTheme } from '../context/ThemeContext';
 import { toPersianDigits } from '../utils/persianDigits';
 
+export const RESERVED_PLAYER_NAME = 'no-act';
+
+export const isReservedPlayerName = (name) => {
+	if (typeof name !== 'string') return false;
+	return name.trim().toLowerCase() === RESERVED_PLAYER_NAME;
+};
+
 export default function SetupScreen({ onStartGame }) {
 	const { theme, currentThemeKey, changeTheme, THEMES } = useTheme();
 
@@ -32,6 +39,10 @@ export default function SetupScreen({ onStartGame }) {
 	const addPlayer = () => {
 		const trimmed = playerName.trim();
 		if (!trimmed) return;
+		if (isReservedPlayerName(trimmed)) {
+			Alert.alert('نام غیرمجاز', 'این نام برای عملکرد بازی رزرو شده است و نمی‌توان از آن استفاده کرد.');
+			return;
+		}
 		if (players.some((p) => p.name === trimmed)) {
 			Alert.alert('خطا', 'این بازیکن قبلاً اضافه شده است.');
 			return;
