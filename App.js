@@ -20,62 +20,62 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { FONTS } from './src/styles/theme';
 
 // --- DEV MOCK DATA ---
-const MOCK_PLAYERS = [
-	{
-		id: '1',
-		name: 'متین',
-		character: 'godfather',
-		displayCharacter: 'پدرخوانده',
-		side: 'mafia',
-		isAlive: true,
-		acts: [null],
-	},
-	{
-		id: '2',
-		name: 'رامتین',
-		character: 'doctorlecter',
-		displayCharacter: 'دکترلکتر',
-		side: 'mafia',
-		isAlive: true,
-		acts: [null],
-	},
-	{
-		id: '3',
-		name: 'روژین',
-		character: 'doctor',
-		displayCharacter: 'دکتر',
-		side: 'city',
-		isAlive: true,
-		acts: [null],
-	},
-	{
-		id: '4',
-		name: 'محمد',
-		character: 'detective',
-		displayCharacter: 'کارآگاه',
-		side: 'city',
-		isAlive: true,
-		acts: [null],
-	},
-	{
-		id: '5',
-		name: 'سارا',
-		character: 'sniper',
-		displayCharacter: 'حرفه‌ای',
-		side: 'city',
-		isAlive: true,
-		acts: [null],
-	},
-	{
-		id: '6',
-		name: 'حسن',
-		character: 'invincible',
-		displayCharacter: 'جان‌سخت',
-		side: 'city',
-		isAlive: true,
-		acts: [null],
-	},
-];
+// const MOCK_PLAYERS = [
+// 	{
+// 		id: '1',
+// 		name: 'متین',
+// 		character: 'godfather',
+// 		displayCharacter: 'پدرخوانده',
+// 		side: 'mafia',
+// 		isAlive: true,
+// 		acts: [null],
+// 	},
+// 	{
+// 		id: '2',
+// 		name: 'رامتین',
+// 		character: 'doctorlecter',
+// 		displayCharacter: 'دکترلکتر',
+// 		side: 'mafia',
+// 		isAlive: true,
+// 		acts: [null],
+// 	},
+// 	{
+// 		id: '3',
+// 		name: 'روژین',
+// 		character: 'doctor',
+// 		displayCharacter: 'دکتر',
+// 		side: 'city',
+// 		isAlive: true,
+// 		acts: [null],
+// 	},
+// 	{
+// 		id: '4',
+// 		name: 'محمد',
+// 		character: 'detective',
+// 		displayCharacter: 'کارآگاه',
+// 		side: 'city',
+// 		isAlive: true,
+// 		acts: [null],
+// 	},
+// 	{
+// 		id: '5',
+// 		name: 'سارا',
+// 		character: 'sniper',
+// 		displayCharacter: 'حرفه‌ای',
+// 		side: 'city',
+// 		isAlive: true,
+// 		acts: [null],
+// 	},
+// 	{
+// 		id: '6',
+// 		name: 'حسن',
+// 		character: 'invincible',
+// 		displayCharacter: 'جان‌سخت',
+// 		side: 'city',
+// 		isAlive: true,
+// 		acts: [null],
+// 	},
+// ];
 
 function MainGame() {
 	useKeepAwake();

@@ -25,6 +25,7 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+coverage/
 
 # macOS
 .DS_Store
@@ -39,3 +40,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+.gitignore
+package-lock.json
+package.json
+__tests__/SetupScreen.test.js
+__tests__/ShuffleScreen.test.js
+docs/qa-report.md
