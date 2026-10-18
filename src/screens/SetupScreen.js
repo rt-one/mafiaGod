@@ -21,6 +21,39 @@ export const isReservedPlayerName = (name) => {
 	return name.trim().toLowerCase() === RESERVED_PLAYER_NAME;
 };
 
+export const countRolesBySide = (selectedRoles) => {
+	const counts = { mafia: 0, city: 0 };
+	if (!Array.isArray(selectedRoles)) return counts;
+	for (const role of selectedRoles) {
+		if (role?.side === 'mafia') counts.mafia += 1;
+		else if (role?.side === 'city') counts.city += 1;
+	}
+	return counts;
+};
+
+export const getCompositionError = (selectedRoles) => {
+	const { mafia, city } = countRolesBySide(selectedRoles);
+	if (mafia < 1) {
+		return {
+			title: 'ترکیب نامعتبر',
+			message: 'برای شروع بازی حداقل یک نقش مافیا لازم است.',
+		};
+	}
+	if (city < 1) {
+		return {
+			title: 'ترکیب نامعتبر',
+			message: 'برای شروع بازی حداقل یک نقش شهر لازم است.',
+		};
+	}
+	if (city < mafia + 1) {
+		return {
+			title: 'ترکیب نامعتبر',
+			message: 'تعداد نقش‌های شهر باید حداقل یکی بیشتر از نقش‌های مافیا باشد.',
+		};
+	}
+	return null;
+};
+
 export default function SetupScreen({ onStartGame }) {
 	const { theme, currentThemeKey, changeTheme, THEMES } = useTheme();
 
@@ -77,6 +110,11 @@ export default function SetupScreen({ onStartGame }) {
 					selectedChars.length,
 				)}) برابر نیست.`,
 			);
+			return;
+		}
+		const compositionError = getCompositionError(selectedChars);
+		if (compositionError) {
+			Alert.alert(compositionError.title, compositionError.message);
 			return;
 		}
 		onStartGame(players, selectedChars);
