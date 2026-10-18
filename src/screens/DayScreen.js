@@ -27,6 +27,7 @@ export default function DayScreen({
 
 	const timerIntervalRef = useRef(null);
 	const narratedDayRef = useRef(-1); // Ensures narration only happens once per day
+	const submittingVoteRef = useRef(false);
 
 	const alivePlayers = players.filter((p) => p.isAlive);
 	const isThreePlayersLeft = alivePlayers.length === 3;
@@ -125,12 +126,18 @@ export default function DayScreen({
 		};
 	}, []);
 
+	useEffect(() => {
+		submittingVoteRef.current = false;
+		setSelectedVotePlayer(null);
+	}, [players, dayCount]);
+
 	const handleVoteSubmit = () => {
-		if (selectedVotePlayer) {
-			onVoteOut(selectedVotePlayer.id);
-			setShowVoteModal(false);
-			setSelectedVotePlayer(null);
-		}
+		const target = players.find((p) => p.id === selectedVotePlayer?.id);
+		if (!target || !target.isAlive || submittingVoteRef.current) return;
+		submittingVoteRef.current = true;
+		onVoteOut(target.id);
+		setShowVoteModal(false);
+		setSelectedVotePlayer(null);
 	};
 
 	const getLossesText = () => {
@@ -257,17 +264,34 @@ export default function DayScreen({
 			{/* Control Buttons */}
 			<View style={styles.controlsContainer}>
 				{isThreePlayersLeft ? (
-					<TouchableOpacity
-						style={[
-							styles.btn,
-							styles.chaosBtn,
-							{ backgroundColor: theme.surface, borderColor: theme.border },
-						]}
-						onPress={() => startTimer(180)}
-					>
-						<AppText style={[styles.btnText, { color: theme.textLight }]}>شروع ۳ نفره</AppText>
-						<AppText style={[styles.btnSubText, { color: theme.textMuted }]}>۱۸۰ ثانیه</AppText>
-					</TouchableOpacity>
+					<>
+						<TouchableOpacity
+							style={[
+								styles.btn,
+								styles.chaosBtn,
+								{ backgroundColor: theme.surface, borderColor: theme.border },
+							]}
+							onPress={() => startTimer(180)}
+						>
+							<AppText style={[styles.btnText, { color: theme.textLight }]}>شروع ۳ نفره</AppText>
+							<AppText style={[styles.btnSubText, { color: theme.textMuted }]}>۱۸۰ ثانیه</AppText>
+						</TouchableOpacity>
+						{/* GL-001: the timer alone cannot advance the game, so the
+							existing moderator elimination stays available at 3 players.
+							No night button in any 3-player state: the game can only
+							progress via elimination from here. */}
+						<TouchableOpacity
+							style={[styles.btn, styles.voteContainerBtn, { borderColor: theme.danger }]}
+							onPress={() => {
+								setSelectedVotePlayer(null);
+								setShowVoteModal(true);
+							}}
+						>
+							<AppText style={[styles.voteBtnText, { color: theme.danger }]}>
+								خروج با رأی‌گیری 🚫
+							</AppText>
+						</TouchableOpacity>
+					</>
 				) : (
 					<>
 						<TouchableOpacity

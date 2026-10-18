@@ -18,6 +18,7 @@ import DayScreen from './src/screens/DayScreen';
 import NightScreen from './src/screens/NightScreen';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { FONTS } from './src/styles/theme';
+import { determineGameStatus } from './src/logic/gameStatus';
 
 // --- DEV MOCK DATA ---
 // const MOCK_PLAYERS = [
@@ -119,19 +120,9 @@ function MainGame() {
 	const verifyGameStatus = (currentPlayers, currentDay) => {
 		if (currentDay === 0) return null;
 
-		const aliveMafia = currentPlayers.filter((p) => p.isAlive && p.side === 'mafia').length;
-		const aliveCity = currentPlayers.filter((p) => p.isAlive && p.side === 'city').length;
-
-		if (aliveMafia === 0 && aliveCity === 0) return null;
-
-		if (aliveMafia === 0) {
-			setGameOver('CITY_WIN');
-			return 'CITY_WIN';
-		} else if (aliveMafia >= aliveCity) {
-			setGameOver('MAFIA_WIN');
-			return 'MAFIA_WIN';
-		}
-		return null;
+		const result = determineGameStatus(currentPlayers);
+		if (result) setGameOver(result);
+		return result;
 	};
 
 	const handleStartSetup = (playerList, characterList) => {
@@ -142,6 +133,13 @@ function MainGame() {
 
 	const handleShuffleComplete = (assignedPlayers) => {
 		setPlayers(assignedPlayers);
+		// GL-001: evaluate the initial state right after role distribution.
+		// Under the GL-004 composition rule (city >= mafia + 1) a fresh game can
+		// never be an immediate win, but a legacy/dev roster still can.
+		const initialResult = determineGameStatus(assignedPlayers);
+		if (initialResult) {
+			setGameOver(initialResult);
+		}
 		setGameState('DAY');
 	};
 
@@ -188,6 +186,7 @@ function MainGame() {
 
 	const handleVoteOut = (playerId) => {
 		const votedPlayer = players.find((p) => p.id === playerId);
+		if (!votedPlayer || !votedPlayer.isAlive) return;
 		const updated = players.map((p) => (p.id === playerId ? { ...p, isAlive: false } : p));
 		setPlayers(updated);
 
