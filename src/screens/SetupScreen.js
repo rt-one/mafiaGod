@@ -12,6 +12,7 @@ import AppText from '../components/AppText';
 import { ALL_CHARACTERS } from '../constants/characters';
 import { FONTS, globalStyles } from '../styles/theme';
 import { useTheme } from '../context/ThemeContext';
+import { toPersianDigits } from '../utils/persianDigits';
 
 export default function SetupScreen({ onStartGame }) {
 	const { theme, currentThemeKey, changeTheme, THEMES } = useTheme();
@@ -61,7 +62,9 @@ export default function SetupScreen({ onStartGame }) {
 		if (players.length !== selectedChars.length) {
 			Alert.alert(
 				'عدم تطابق',
-				`تعداد بازیکن‌ها (${players.length}) با تعداد نقش‌ها (${selectedChars.length}) برابر نیست.`,
+				`تعداد بازیکن‌ها (${toPersianDigits(players.length)}) با تعداد نقش‌ها (${toPersianDigits(
+					selectedChars.length,
+				)}) برابر نیست.`,
 			);
 			return;
 		}
@@ -123,7 +126,7 @@ export default function SetupScreen({ onStartGame }) {
 				{/* Players Box */}
 				<View style={[styles.card, { backgroundColor: theme.cardDark, borderColor: theme.border }]}>
 					<AppText style={[globalStyles.textRTL, styles.sectionTitle, { color: theme.textLight }]}>
-						لیست بازیکنان ({players.length})
+						لیست بازیکنان ({toPersianDigits(players.length)})
 					</AppText>
 					<View style={styles.inputRow}>
 						<TouchableOpacity
@@ -168,7 +171,7 @@ export default function SetupScreen({ onStartGame }) {
 				{/* Characters Box */}
 				<View style={[styles.card, { backgroundColor: theme.cardDark, borderColor: theme.border }]}>
 					<AppText style={[globalStyles.textRTL, styles.sectionTitle, { color: theme.textLight }]}>
-						انتخاب نقش‌ها ({selectedChars.length} انتخاب شده)
+						انتخاب نقش‌ها ({toPersianDigits(selectedChars.length)} انتخاب شده)
 					</AppText>
 					<View style={styles.grid}>
 						<View style={styles.gridContainer}>
@@ -209,7 +212,7 @@ export default function SetupScreen({ onStartGame }) {
 				</View>
 			</ScrollView>
 
-			<View style={[styles.startFooter, { backgroundColor: theme.bgDark }]}>
+			<View style={[styles.startFooter, { backgroundColor: theme.cardDark }]}>
 				<TouchableOpacity
 					style={[styles.startBtn, { backgroundColor: theme.success }]}
 					onPress={handleStart}
@@ -291,6 +294,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 		paddingHorizontal: 16,
 		paddingTop: 16,
+		gap: 4,
 	},
 	scroll: {
 		flex: 1,
@@ -301,10 +305,11 @@ const styles = StyleSheet.create({
 	},
 	startFooter: {
 		position: 'absolute',
-		left: 16,
-		right: 16,
-		bottom: 16,
-		paddingTop: 8,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		padding: 16,
+		paddingTop: 12,
 	},
 	header: {
 		flexDirection: 'row-reverse',

@@ -4,6 +4,7 @@ import SoundService from '../services/soundService';
 import { FONTS, globalStyles } from '../styles/theme';
 import AppText from '../components/AppText';
 import { useTheme } from '../context/ThemeContext';
+import { toPersianDigits } from '../utils/persianDigits';
 
 export default function DayScreen({
 	players,
@@ -155,7 +156,7 @@ export default function DayScreen({
 					]}
 				>
 					<AppText style={[globalStyles.badgeText, { color: theme.textLight }]}>
-						{dayCount === 0 ? 'روز معارفه' : `روز ${dayCount}`}
+						{dayCount === 0 ? 'روز معارفه' : `روز ${toPersianDigits(dayCount)}`}
 					</AppText>
 				</View>
 			</View>
@@ -168,7 +169,7 @@ export default function DayScreen({
 						onPress={resetTimer}
 						activeOpacity={0.8}
 					>
-						<AppText style={[styles.timerText, { color: theme.textLight }]}>{timerSeconds}</AppText>
+						<AppText style={[styles.timerText, { color: theme.textLight }]}>{toPersianDigits(timerSeconds)}</AppText>
 						<AppText style={[styles.timerCancelHint, { color: theme.textMuted }]}>
 							(برای بازگشت به وقایع لمس کنید)
 						</AppText>
@@ -203,7 +204,7 @@ export default function DayScreen({
 										]}
 									>
 										<AppText weight="bold" style={[styles.entryTitle, { color: theme.textLight }]}>
-											{entry.title}
+											{toPersianDigits(entry.title)}
 										</AppText>
 										{entry.type === 'INTRO' && (
 											<AppText style={[styles.entryBody, { color: theme.textMuted }]}>
@@ -230,8 +231,8 @@ export default function DayScreen({
 												)}
 												{entry.enquiry && entry.enquiryTally && (
 													<AppText style={[styles.entryBody, { color: theme.citizenBlue }]}>
-														🪦 استعلام: {entry.enquiryTally.deadMafia} مافیا و{' '}
-														{entry.enquiryTally.deadCity} شهروند
+														🪦 استعلام: {toPersianDigits(entry.enquiryTally.deadMafia)} مافیا و{' '}
+														{toPersianDigits(entry.enquiryTally.deadCity)} شهروند
 													</AppText>
 												)}
 											</View>
@@ -337,9 +338,11 @@ export default function DayScreen({
 							</AppText>
 							<AppText style={styles.resultsBody}>
 								{lastNightResults?.enquiry
-									? `بله (${players.filter((p) => !p.isAlive && p.side === 'mafia').length} مافیا و ${
-											players.filter((p) => !p.isAlive && p.side === 'city').length
-										} شهروند)`
+									? `بله (${toPersianDigits(
+											players.filter((p) => !p.isAlive && p.side === 'mafia').length,
+										)} مافیا و ${toPersianDigits(
+											players.filter((p) => !p.isAlive && p.side === 'city').length,
+										)} شهروند)`
 									: 'نداشت'}
 							</AppText>
 						</ScrollView>

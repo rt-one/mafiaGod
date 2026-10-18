@@ -11,6 +11,12 @@ import SoundService from '../services/soundService';
 import { FONTS, globalStyles } from '../styles/theme';
 import AppText from '../components/AppText';
 import { useTheme } from '../context/ThemeContext';
+import {
+	canRequestInvincibleEnquiry,
+	getInvincibleEnquiriesRemaining,
+	getNextInvincibleEnquiryCount,
+} from '../logic/invincibleEnquiry';
+import { toPersianDigits } from '../utils/persianDigits';
 
 export default function NightScreen({ players, dayCount, onNightConcluded }) {
 	const { theme } = useTheme();
@@ -129,6 +135,13 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 	};
 
 	const confirmPlayerAction = (player) => {
+		if (player.character === 'invincible' && selectedTarget === 'yes') {
+			const current = localPlayers.find((item) => item.id === player.id) || player;
+			if (!canRequestInvincibleEnquiry(current, dayCount)) {
+				Alert.alert('محدودیت استعلام', 'جان‌سخت قبلاً هر دو استعلام خود را استفاده کرده است.');
+				return;
+			}
+		}
 		if (timerRef.current) clearInterval(timerRef.current);
 		SoundService.playSound('bell');
 
@@ -259,8 +272,11 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 			}
 		}
 
-		// 3. Invincible Enquiry
-		if (invincible && invincible.acts?.[dayCount] === 'yes') {
+		// 3. Invincible Enquiry (GL-002: at most two successful enquiries per game)
+		const invincibleEnquiryRequested = invincible?.acts?.[dayCount] === 'yes';
+		const invincibleEnquiryGranted =
+			invincibleEnquiryRequested && canRequestInvincibleEnquiry(invincible, dayCount);
+		if (invincibleEnquiryGranted) {
 			summary.enquiry = true;
 		}
 
@@ -281,10 +297,25 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 			if (summary.losses.includes(p.name)) isAlive = false;
 			if (summary.returned === p.name) isAlive = true;
 			const isInvincible = p.character === 'invincible';
+			// GL-002/GL-007 compatibility: an enquiry is consumed only when it was
+			// granted and Invincible is alive after this night. Under current
+			// resolution a granted enquiry never changes losses, so this survives
+			// value always matches the final isAlive, while a future GL-007 change
+			// that cancels the enquiry on death will automatically not consume it.
+			const enquiryUsed = isInvincible
+				? getNextInvincibleEnquiryCount({
+						player: p,
+						dayCount,
+						requested: p.name === invincible?.name && invincibleEnquiryRequested,
+						granted: p.name === invincible?.name && invincibleEnquiryGranted,
+						survives: isAlive,
+					})
+				: p.enquiryUsed;
 			return {
 				...p,
 				isAlive,
 				vulnerable: isInvincible ? invincibleVulnerable : p.vulnerable,
+				...(isInvincible ? { enquiryUsed } : null),
 			};
 		});
 
@@ -313,7 +344,7 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 					]}
 				>
 					<AppText style={[globalStyles.badgeText, { color: theme.textLight }]}>
-						{dayCount === 0 ? 'شب معارفه' : `شب ${dayCount}`}
+						{dayCount === 0 ? 'شب معارفه' : `شب ${toPersianDigits(dayCount)}`}
 					</AppText>
 				</View>
 			</View>
@@ -332,7 +363,9 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 					<AppText style={[styles.mafiaTimerLabel, { color: theme.mafiaRed }]}>
 						زمان {dayCount === 0 && 'معارفه و '}هماهنگی مافیا
 					</AppText>
-					<AppText style={[styles.timerText, { color: theme.textLight }]}>{mafiaSeconds}</AppText>
+					<AppText style={[styles.timerText, { color: theme.textLight }]}>
+						{toPersianDigits(mafiaSeconds)}
+					</AppText>
 				</View>
 			)}
 
@@ -372,7 +405,7 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 			{phase === 'PLAYER_ACT' && activePlayer && (
 				<View style={[styles.actContainer, { backgroundColor: theme.cardDark }]}>
 					<AppText style={[styles.actTimerText, { color: theme.textLight }]}>
-						{playerSeconds}
+						{toPersianDigits(playerSeconds)}
 					</AppText>
 					<AppText style={[styles.actPlayerTitle, { color: theme.textLight }]}>
 						{activePlayer.name} ({activePlayer.displayCharacter})
@@ -550,44 +583,44 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 								))}
 
 						{/* Invincible */}
-						{activePlayer.character === 'invincible' && (
-							<View style={{ flexDirection: 'row', gap: 10 }}>
-								<TouchableOpacity
-									style={[
-										styles.targetOption,
-										{ flex: 1, backgroundColor: theme.surface },
-										selectedTarget === 'yes' && { backgroundColor: theme.gold },
-									]}
-									onPress={() => setSelectedTarget('yes')}
-								>
-									<AppText
-										style={[
-											styles.targetOptionText,
-											selectedTarget === 'yes' && { color: theme.textDark, fontFamily: FONTS.bold },
-										]}
-									>
-										بله (استعلام)
-									</AppText>
-								</TouchableOpacity>
-								<TouchableOpacity
-									style={[
-										styles.targetOption,
-										{ flex: 1, backgroundColor: theme.surface },
-										selectedTarget === 'no' && { backgroundColor: theme.gold },
-									]}
-									onPress={() => setSelectedTarget('no')}
-								>
-									<AppText
-										style={[
-											styles.targetOptionText,
-											selectedTarget === 'no' && { color: theme.textDark, fontFamily: FONTS.bold },
-										]}
-									>
-										خیر
-									</AppText>
-								</TouchableOpacity>
-							</View>
-						)}
+						{activePlayer.character === 'invincible' &&
+							(() => {
+								const invincibleState =
+									localPlayers.find((item) => item.id === activePlayer.id) || activePlayer;
+								const remaining = getInvincibleEnquiriesRemaining(invincibleState, dayCount);
+								const exhausted = remaining <= 0;
+								return (
+									<View>
+										<AppText style={[styles.selectorLabel, { color: theme.textMuted }]}>
+											{exhausted
+												? 'سهمیه استعلام تمام شده است 🚫'
+												: `استعلام باقی‌مانده: ${toPersianDigits(remaining)} از ${toPersianDigits(2)}`}
+										</AppText>
+										<TouchableOpacity
+											style={[
+												styles.targetOption,
+												{ backgroundColor: theme.surface },
+												selectedTarget === 'yes' && { backgroundColor: theme.gold },
+												exhausted && { opacity: 0.4 },
+											]}
+											disabled={exhausted}
+											onPress={() => setSelectedTarget('yes')}
+										>
+											<AppText
+												style={[
+													styles.targetOptionText,
+													selectedTarget === 'yes' && {
+														color: theme.textDark,
+														fontFamily: FONTS.bold,
+													},
+												]}
+											>
+												بله (استعلام)
+											</AppText>
+										</TouchableOpacity>
+									</View>
+								);
+							})()}
 
 						{/* Constantine */}
 						{activePlayer.character === 'constantine' &&

@@ -39,6 +39,7 @@ export default function ShuffleScreen({ initialPlayers, initialCharacters, onCom
 				acts: [null],
 				vulnerable: false,
 				obvious: false,
+				enquiryUsed: 0,
 			};
 		});
 
