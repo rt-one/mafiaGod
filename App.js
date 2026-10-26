@@ -166,6 +166,7 @@ function MainGame() {
 				type: 'NIGHT',
 				title: `شب ${dayCount}`,
 				losses: summary.losses || [],
+				returned: summary.returned || null,
 				silenced: summary.silenced || null,
 				enquiry: summary.enquiry || false,
 				enquiryTally: summary.enquiry ? { deadMafia, deadCity } : null,

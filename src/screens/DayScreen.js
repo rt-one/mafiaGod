@@ -57,8 +57,8 @@ export default function DayScreen({
 			await SoundService.wait(0.4);
 		}
 
-		if (lastNightResults?.silenced) {
-			await SoundService.playAndWait('silence');
+		if (lastNightResults?.returned) {
+			await SoundService.playAndWait('resurrection');
 			await SoundService.wait(0.4);
 		}
 
@@ -90,6 +90,11 @@ export default function DayScreen({
 			}
 		} else {
 			await SoundService.playAndWait('noEnquiry');
+			await SoundService.wait(0.4);
+		}
+
+		if (lastNightResults?.silenced) {
+			await SoundService.playAndWait('silence');
 			await SoundService.wait(0.4);
 		}
 	};
@@ -231,6 +236,12 @@ export default function DayScreen({
 														{entry.losses.length > 0 ? entry.losses.join('، ') : 'هیچکس'}
 													</AppText>
 												</AppText>
+												{entry.returned && (
+													<AppText style={[styles.entryBody, { color: theme.success }]}>
+														✨ بازگشت به بازی:{' '}
+														<AppText weight="bold">{entry.returned}</AppText>
+													</AppText>
+												)}
 												{entry.silenced && (
 													<AppText style={[styles.entryBody, { color: theme.warning }]}>
 														🤫 سایلنت: {entry.silenced}
@@ -351,6 +362,12 @@ export default function DayScreen({
 								☠️ کشته‌ها:
 							</AppText>
 							<AppText style={styles.resultsBody}>{getLossesText()}</AppText>
+							<AppText style={[styles.resultsHeader, { borderColor: theme.border }]}>
+								✨ بازگشت به بازی:
+							</AppText>
+							<AppText style={styles.resultsBody}>
+								{lastNightResults?.returned ? lastNightResults.returned : 'هیچکس'}
+							</AppText>
 							<AppText style={[styles.resultsHeader, { borderColor: theme.border }]}>
 								🤫 سایلنت شده:
 							</AppText>

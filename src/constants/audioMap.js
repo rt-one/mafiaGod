@@ -21,6 +21,7 @@ export const AUDIO_FILES = {
 	enquiry3: require('../../assets/static/audios/enquiry_3.wav'),
 	enquiryNoLoss: require('../../assets/static/audios/enquiry_no_loss.wav'),
 	noEnquiry: require('../../assets/static/audios/no_enquiry.wav'),
+	resurrection: require('../../assets/static/audios/resurrection.wav'),
 	1: require('../../assets/static/audios/1.wav'),
 	2: require('../../assets/static/audios/2.wav'),
 	3: require('../../assets/static/audios/3.wav'),

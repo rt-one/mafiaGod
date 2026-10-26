@@ -78,21 +78,29 @@ class SoundService {
 			return new Promise(async (resolve) => {
 				this.currentResolve = resolve;
 
-				const { sound } = await Audio.Sound.createAsync(source, { shouldPlay: true });
-				this.currentSound = sound;
+				try {
+					const { sound } = await Audio.Sound.createAsync(source, { shouldPlay: true });
+					this.currentSound = sound;
 
-				sound.setOnPlaybackStatusUpdate(async (status) => {
-					if (status.didJustFinish || status.error) {
-						await sound.unloadAsync().catch(() => {});
-						if (this.currentSound === sound) {
-							this.currentSound = null;
+					sound.setOnPlaybackStatusUpdate(async (status) => {
+						if (status.didJustFinish || status.error) {
+							await sound.unloadAsync().catch(() => {});
+							if (this.currentSound === sound) {
+								this.currentSound = null;
+							}
+							if (this.currentResolve) {
+								this.currentResolve();
+								this.currentResolve = null;
+							}
 						}
-						if (this.currentResolve) {
-							this.currentResolve();
-							this.currentResolve = null;
-						}
+					});
+				} catch (innerError) {
+					console.warn(`Error loading sound ${key}:`, innerError);
+					if (this.currentResolve) {
+						this.currentResolve();
+						this.currentResolve = null;
 					}
-				});
+				}
 			});
 		} catch (error) {
 			console.warn(`Error in playAndWait for ${key}:`, error);

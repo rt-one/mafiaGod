@@ -16,6 +16,7 @@ import {
 	getInvincibleEnquiriesRemaining,
 	getNextInvincibleEnquiryCount,
 } from '../logic/invincibleEnquiry';
+import { getSuccessfulResurrection } from '../logic/resurrection';
 import { toPersianDigits } from '../utils/persianDigits';
 
 export default function NightScreen({ players, dayCount, onNightConcluded }) {
@@ -287,10 +288,7 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 		}
 
 		// 5. Constantine Resurrection
-		const constan = playersList.find((p) => p.character === 'constantine' && p.isAlive);
-		if (constan && constan.acts?.[dayCount] && constan.acts[dayCount] !== 'no-act') {
-			summary.returned = constan.acts[dayCount];
-		}
+		summary.returned = getSuccessfulResurrection(playersList, dayCount);
 
 		const updatedPlayers = playersList.map((p) => {
 			let isAlive = p.isAlive;
