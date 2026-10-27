@@ -93,7 +93,7 @@ function MainGame() {
 	// DEV:
 
 	// 1. Change 'SETUP' to 'DAY' (or 'NIGHT')
-	// const [gameState, setGameState] = useState('NIGHT');
+	// const [gameState, setGameState] = useState('DAY');
 	// 2. Supply the mock players
 	// const [players, setPlayers] = useState(MOCK_PLAYERS);
 	// 3. Set whatever day you want to test (e.g. Day 1 or Day 2)

@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
+import {
+	View,
+	TouchableOpacity,
+	StyleSheet,
+	Modal,
+	ScrollView,
+	ImageBackground,
+	StatusBar,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { NIGHT_RESULTS_IMAGES } from '../constants/nightResultsImages';
 import SoundService from '../services/soundService';
 import { FONTS, globalStyles } from '../styles/theme';
 import AppText from '../components/AppText';
@@ -487,46 +497,134 @@ export default function DayScreen({
 			</View>
 
 			{/* Night Results Modal */}
-			<Modal visible={showResultsModal} transparent animationType="slide">
-				<View style={styles.modalOverlay}>
-					<View style={[styles.resultsContainer, { backgroundColor: theme.gold }]}>
-						<AppText style={styles.resultsTitle}>گزارش اتفاقات شب گذشته</AppText>
-						<ScrollView style={{ maxHeight: 250, width: '100%' }}>
-							<AppText style={[styles.resultsHeader, { borderColor: theme.border }]}>
-								☠️ کشته‌ها:
-							</AppText>
-							<AppText style={styles.resultsBody}>{getLossesText()}</AppText>
-							<AppText style={[styles.resultsHeader, { borderColor: theme.border }]}>
-								✨ بازگشت به بازی:
-							</AppText>
-							<AppText style={styles.resultsBody}>
-								{lastNightResults?.returned ? lastNightResults.returned : 'هیچکس'}
-							</AppText>
-							<AppText style={[styles.resultsHeader, { borderColor: theme.border }]}>
-								🤫 سایلنت شده:
-							</AppText>
-							<AppText style={styles.resultsBody}>
-								{lastNightResults?.silenced ? lastNightResults.silenced : 'هیچکس'}
-							</AppText>
-							<AppText style={[styles.resultsHeader, { borderColor: theme.border }]}>
-								🪦 استعلام جان‌سخت:
-							</AppText>
-							<AppText style={styles.resultsBody}>
-								{lastNightResults?.enquiry
-									? `بله (${toPersianDigits(
-											players.filter((p) => !p.isAlive && p.side === 'mafia').length,
-										)} مافیا و ${toPersianDigits(
-											players.filter((p) => !p.isAlive && p.side === 'city').length,
-										)} شهروند)`
-									: 'نداشت'}
-							</AppText>
-						</ScrollView>
+			<Modal
+				visible={showResultsModal}
+				transparent={false}
+				animationType="slide"
+				statusBarTranslucent
+			>
+				<View
+					style={[
+						styles.resultsScreen,
+						{ backgroundColor: theme.gold, paddingTop: StatusBar.currentHeight },
+					]}
+				>
+					{/* Fixed Header */}
+					<View style={styles.resultsHeaderContainer}>
+						<AppText style={styles.resultsScreenTitle}>گزارش اتفاقات شب گذشته</AppText>
+					</View>
+
+					{/* Results Sections */}
+					<View style={styles.resultsGrid}>
+						{/* Losses */}
+						<View style={[styles.resultCard, styles.resultCardLarge]}>
+							<ImageBackground
+								source={NIGHT_RESULTS_IMAGES['losses']}
+								style={styles.resultImage}
+								imageStyle={styles.resultImageStyle}
+								resizeMode="cover"
+							>
+								<LinearGradient
+									colors={['transparent', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.88)']}
+									locations={[0, 0.4, 1]}
+									style={styles.resultGradient}
+								>
+									<View style={styles.resultTextContainer}>
+										<AppText style={styles.resultSubtitle}>☠️ کشته‌ها</AppText>
+										<AppText style={styles.resultNames}>{getLossesText()}</AppText>
+									</View>
+								</LinearGradient>
+							</ImageBackground>
+						</View>
+
+						{/* Returned Players */}
+						<View style={styles.resultCard}>
+							<ImageBackground
+								source={NIGHT_RESULTS_IMAGES['returned']}
+								style={styles.resultImage}
+								imageStyle={styles.resultImageStyle}
+								resizeMode="cover"
+							>
+								<LinearGradient
+									colors={['transparent', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.88)']}
+									locations={[0, 0.4, 1]}
+									style={styles.resultGradient}
+								>
+									<View style={styles.resultTextContainer}>
+										<AppText style={styles.resultSubtitle}>✨ بازگشت به بازی</AppText>
+										<AppText style={styles.resultNames}>
+											{lastNightResults?.returned || 'هیچکس'}
+										</AppText>
+									</View>
+								</LinearGradient>
+							</ImageBackground>
+						</View>
+
+						{/* Silenced Players */}
+						<View style={styles.resultCard}>
+							<ImageBackground
+								source={NIGHT_RESULTS_IMAGES['silenced']}
+								style={styles.resultImage}
+								imageStyle={styles.resultImageStyle}
+								resizeMode="cover"
+							>
+								<LinearGradient
+									colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.88)']}
+									locations={[0, 0.25, 1]}
+									style={styles.resultGradient}
+								>
+									<View style={styles.resultTextContainer}>
+										<AppText style={styles.resultSubtitle}>🤫 سایلنت شده</AppText>
+										<AppText style={styles.resultNames}>
+											{lastNightResults?.silenced || 'هیچکس'}
+										</AppText>
+									</View>
+								</LinearGradient>
+							</ImageBackground>
+						</View>
+
+						{/* Invincible Enquiry */}
+						<View style={[styles.resultCard, styles.resultCardLarge]}>
+							<ImageBackground
+								source={NIGHT_RESULTS_IMAGES['enquiry']}
+								style={styles.resultImage}
+								imageStyle={styles.resultImageStyle}
+								resizeMode="cover"
+							>
+								<LinearGradient
+									colors={['transparent', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.88)']}
+									locations={[0, 0.4, 1]}
+									style={styles.resultGradient}
+								>
+									<View style={styles.resultTextContainer}>
+										<AppText style={styles.resultSubtitle}>🪦 استعلام جان‌سخت</AppText>
+										<AppText style={styles.resultNames}>
+											{lastNightResults?.enquiry
+												? `بله (${toPersianDigits(
+														players.filter((p) => !p.isAlive && p.side === 'mafia').length,
+													)} مافیا و ${toPersianDigits(
+														players.filter((p) => !p.isAlive && p.side === 'city').length,
+													)} شهروند)`
+												: 'نداشت'}
+										</AppText>
+									</View>
+								</LinearGradient>
+							</ImageBackground>
+						</View>
+					</View>
+
+					{/* Fixed Bottom Button */}
+					<View style={styles.resultsFooter}>
 						<TouchableOpacity
 							style={[
 								styles.resultsCloseBtn,
-								{ backgroundColor: theme.warning, borderColor: theme.border },
+								{
+									backgroundColor: theme.warning,
+									borderColor: theme.border,
+								},
 							]}
 							onPress={() => setShowResultsModal(false)}
+							activeOpacity={0.8}
 						>
 							<AppText style={[styles.resultsCloseBtnText, { color: theme.textDark }]}>
 								شروع روز ⛅
@@ -915,8 +1013,90 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		padding: 20,
 	},
+	resultsScreen: {
+		flex: 1,
+		width: '100%',
+		height: '100%',
+		paddingHorizontal: 16,
+		paddingBottom: 18,
+	},
+	resultsHeaderContainer: {
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingVertical: 10,
+	},
+	resultsScreenTitle: {
+		fontFamily: FONTS.bold,
+		fontSize: 21,
+		color: '#000',
+		textAlign: 'center',
+	},
+	resultsGrid: {
+		flex: 1,
+		minHeight: 0,
+		gap: 10,
+	},
+	resultCard: {
+		flex: 1,
+		minHeight: 0,
+		borderRadius: 16,
+		overflow: 'hidden',
+	},
+	resultCardLarge: {
+		flex: 1.3,
+	},
+	resultImage: {
+		flex: 1,
+		justifyContent: 'flex-end',
+	},
+	resultImageStyle: {
+		borderRadius: 16,
+	},
+	resultGradient: {
+		flex: 1,
+		justifyContent: 'flex-end',
+		paddingHorizontal: 19,
+		paddingVertical: 16,
+	},
+	resultTextContainer: {
+		alignItems: 'flex-end',
+		alignSelf: 'stretch',
+	},
+	resultSubtitle: {
+		fontFamily: FONTS.bold,
+		fontSize: 14,
+		color: '#E5D6B5',
+		textAlign: 'right',
+		writingDirection: 'rtl',
+		marginBottom: 2,
+	},
+	resultNames: {
+		fontFamily: FONTS.extraBold,
+		fontSize: 24,
+		color: '#FFFFFF',
+		textAlign: 'right',
+		writingDirection: 'rtl',
+		lineHeight: 36,
+	},
+	resultsFooter: {
+		paddingTop: 18,
+	},
+	resultsCloseBtn: {
+		width: '100%',
+		paddingVertical: 14,
+		paddingHorizontal: 24,
+		borderRadius: 28,
+		borderWidth: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	resultsCloseBtnText: {
+		fontFamily: FONTS.bold,
+		fontSize: 22,
+	},
 	resultsContainer: {
 		width: '100%',
+		maxHeight: '80%',
 		borderRadius: 20,
 		padding: 20,
 		paddingBottom: 18,
@@ -941,16 +1121,6 @@ const styles = StyleSheet.create({
 		writingDirection: 'rtl',
 		marginBottom: 20,
 	},
-	resultsCloseBtn: {
-		paddingVertical: 12,
-		paddingHorizontal: 24,
-		borderRadius: 12,
-		borderWidth: 1,
-		marginTop: 16,
-		width: '100%',
-		alignItems: 'center',
-	},
-	resultsCloseBtnText: { fontFamily: FONTS.bold, fontSize: 18 },
 	voteModalContainer: {
 		maxHeight: '85%',
 		width: '100%',
