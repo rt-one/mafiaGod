@@ -136,13 +136,13 @@ export default function ShuffleScreen({ initialPlayers, initialCharacters, onCom
 								<View
 									style={[
 										styles.imageWrapper,
-										{ backgroundColor: theme.surface, borderColor: theme.border },
+										{ backgroundColor: theme.surface, borderColor: theme.bgDark },
 									]}
 								>
 									<Image
 										source={CHARACTER_IMAGES[modalPlayer.character]}
 										style={styles.characterImage}
-										resizeMode="contain"
+										resizeMode="cover"
 									/>
 								</View>
 							)}
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		marginBottom: 10,
-		borderWidth: 1,
+		borderWidth: 4,
 		overflow: 'hidden',
 	},
 	characterImage: {
