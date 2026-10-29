@@ -19,6 +19,144 @@ import {
 import { getSuccessfulResurrection } from '../logic/resurrection';
 import { toPersianDigits } from '../utils/persianDigits';
 
+export const resolveNightActions = (playersList, dayCount) => {
+	const summary = {
+		losses: [],
+		silenced: null,
+		enquiry: false,
+		returned: null,
+	};
+
+	if (dayCount === 0) {
+		return { updatedPlayers: playersList, summary };
+	}
+
+	const losses = new Set();
+	const addLoss = (targetName) => {
+		if (targetName) losses.add(targetName);
+	};
+	const findLivingRole = (character) =>
+		playersList.find((player) => player.character === character && player.isAlive);
+
+	const doctor = findLivingRole('doctor');
+	const lecter = findLivingRole('doctorlecter');
+	const godfather = findLivingRole('godfather');
+	const sniper = findLivingRole('sniper');
+	const invincible = findLivingRole('invincible');
+	const psychologist = findLivingRole('psychologist');
+	const constantine = findLivingRole('constantine');
+	const detective = findLivingRole('detective');
+
+	const doctorSaveTarget = doctor?.acts?.[dayCount];
+	const lecterSaveTarget = lecter?.acts?.[dayCount];
+	const mafiaTargetName =
+		godfather?.acts?.[dayCount] && godfather.acts[dayCount] !== 'no-act'
+			? godfather.acts[dayCount]
+			: lecter?.shots?.[dayCount] && lecter.shots[dayCount] !== 'no-act'
+				? lecter.shots[dayCount]
+				: null;
+
+	let invincibleVulnerable = invincible?.vulnerable || false;
+
+	// Resolve attacks and Doctor protection before evaluating any night ability.
+	// This preserves the established Mafia-then-Sniper attack order without
+	// introducing a broader role-priority system.
+	if (mafiaTargetName && mafiaTargetName !== doctorSaveTarget) {
+		if (invincible && mafiaTargetName === invincible.name) {
+			if (invincibleVulnerable) {
+				addLoss(invincible.name);
+			} else {
+				invincibleVulnerable = true;
+			}
+		} else {
+			addLoss(mafiaTargetName);
+		}
+	}
+
+	// A sniper protected from the Mafia attack remains alive and can shoot;
+	// otherwise their shot is cancelled before it has any effect.
+	const sniperSurvivedMafiaAttack = sniper && !losses.has(sniper.name);
+	if (sniperSurvivedMafiaAttack && sniper.acts?.[dayCount] && sniper.acts[dayCount] !== 'no-act') {
+		const sniperTargetName = sniper.acts[dayCount];
+		const sniperTarget = playersList.find((player) => player.name === sniperTargetName);
+
+		if (sniperTarget?.side === 'city') {
+			addLoss(sniper.name);
+		} else if (sniperTarget?.side === 'mafia' && sniperTargetName !== lecterSaveTarget) {
+			addLoss(sniperTargetName);
+		}
+	}
+
+	const survivesAttacks = (player) => !!player && player.isAlive && !losses.has(player.name);
+
+	// All non-attack abilities are now gated by the final attack survival state.
+	const invincibleEnquiryRequested = invincible?.acts?.[dayCount] === 'yes';
+	const invincibleEnquiryGranted =
+		survivesAttacks(invincible) &&
+		invincibleEnquiryRequested &&
+		canRequestInvincibleEnquiry(invincible, dayCount);
+	if (invincibleEnquiryGranted) {
+		summary.enquiry = true;
+	}
+
+	if (survivesAttacks(psychologist)) {
+		const silenceTarget = psychologist.acts?.[dayCount];
+		const target = playersList.find((player) => player.name === silenceTarget);
+		if (silenceTarget && silenceTarget !== 'no-act' && survivesAttacks(target)) {
+			summary.silenced = silenceTarget;
+		}
+	}
+
+	if (survivesAttacks(constantine)) {
+		summary.returned = getSuccessfulResurrection(playersList, dayCount);
+	}
+
+	const detectiveTargetName = detective?.acts?.[dayCount];
+	const detectiveTarget = playersList.find((player) => player.name === detectiveTargetName);
+	const detectiveExposesGodfather =
+		survivesAttacks(detective) &&
+		detectiveTarget?.character === 'godfather' &&
+		survivesAttacks(detectiveTarget) &&
+		!detectiveTarget.obvious;
+
+	const cancelledActors = new Set(
+		playersList.filter((player) => player.isAlive && !survivesAttacks(player)).map((player) => player.id),
+	);
+	summary.losses = [...losses];
+
+	const updatedPlayers = playersList.map((player) => {
+		const isAlive = survivesAttacks(player) || summary.returned === player.name;
+		const actionCancelled = cancelledActors.has(player.id);
+		const acts = actionCancelled ? [...(player.acts || [])] : player.acts;
+		if (actionCancelled) acts[dayCount] = 'no-act';
+		const shots = actionCancelled && player.character === 'doctorlecter' ? { ...(player.shots || {}) } : player.shots;
+		if (actionCancelled && player.character === 'doctorlecter') shots[dayCount] = 'no-act';
+
+		const isInvincible = player.character === 'invincible';
+		const enquiryUsed = isInvincible
+			? getNextInvincibleEnquiryCount({
+					player,
+					dayCount,
+					requested: player.name === invincible?.name && invincibleEnquiryRequested,
+					granted: player.name === invincible?.name && invincibleEnquiryGranted,
+					survives: survivesAttacks(player),
+				})
+			: player.enquiryUsed;
+
+		return {
+			...player,
+			...(actionCancelled ? { acts } : null),
+			...(actionCancelled && player.character === 'doctorlecter' ? { shots } : null),
+			...(detectiveExposesGodfather && player.id === detectiveTarget.id ? { obvious: true } : null),
+			isAlive,
+			vulnerable: isInvincible ? invincibleVulnerable : player.vulnerable,
+			...(isInvincible ? { enquiryUsed } : null),
+		};
+	});
+
+	return { updatedPlayers, summary };
+};
+
 export default function NightScreen({ players, dayCount, onNightConcluded }) {
 	const { theme } = useTheme();
 
@@ -181,9 +319,8 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 			if (target.obvious) {
 				side = 'mafia';
 			} else {
-				setLocalPlayers((prev) =>
-					prev.map((p) => (p.name === target.name ? { ...p, obvious: true } : p)),
-				);
+				// Persist the one-time false result only during night resolution,
+				// after verifying that the Detective survived the night.
 				side = 'city';
 			}
 		}
@@ -206,119 +343,7 @@ export default function NightScreen({ players, dayCount, onNightConcluded }) {
 		onNightConcluded(nightResult.updatedPlayers, nightResult.summary);
 	};
 
-	const concludeNight = (playersList) => {
-		const summary = {
-			losses: [],
-			silenced: null,
-			enquiry: false,
-			returned: null,
-		};
-
-		if (dayCount === 0) {
-			return { updatedPlayers: playersList, summary };
-		}
-
-		const addUniqueLoss = (targetName) => {
-			if (targetName && !summary.losses.includes(targetName)) {
-				summary.losses.push(targetName);
-			}
-		};
-
-		const doc = playersList.find((p) => p.character === 'doctor' && p.isAlive);
-		const lecter = playersList.find((p) => p.character === 'doctorlecter' && p.isAlive);
-		const invincible = playersList.find((p) => p.character === 'invincible' && p.isAlive);
-		const sniper = playersList.find((p) => p.character === 'sniper' && p.isAlive);
-
-		const docSaveTarget = doc?.acts?.[dayCount];
-		const lecterSaveTarget = lecter?.acts?.[dayCount];
-
-		// 1. Mafia Shot
-		let mafiaTargetName = null;
-		const gf = playersList.find((p) => p.character === 'godfather' && p.isAlive);
-		if (gf && gf.acts?.[dayCount] && gf.acts[dayCount] !== 'no-act') {
-			mafiaTargetName = gf.acts[dayCount];
-		} else if (lecter && lecter.shots?.[dayCount] && lecter.shots[dayCount] !== 'no-act') {
-			mafiaTargetName = lecter.shots[dayCount];
-		}
-
-		let invincibleVulnerable = invincible?.vulnerable || false;
-
-		if (mafiaTargetName && mafiaTargetName !== 'no-act') {
-			if (mafiaTargetName !== docSaveTarget) {
-				if (invincible && mafiaTargetName === invincible.name) {
-					if (invincibleVulnerable) {
-						addUniqueLoss(invincible.name);
-					} else {
-						invincibleVulnerable = true;
-					}
-				} else {
-					addUniqueLoss(mafiaTargetName);
-				}
-			}
-		}
-
-		// 2. Sniper Shot
-		if (sniper && sniper.acts?.[dayCount] && sniper.acts[dayCount] !== 'no-act') {
-			const sniperTargetName = sniper.acts[dayCount];
-			const targetPlayer = playersList.find((p) => p.name === sniperTargetName);
-
-			if (targetPlayer) {
-				if (targetPlayer.side === 'city') {
-					addUniqueLoss(sniper.name);
-				} else if (targetPlayer.side === 'mafia') {
-					if (sniperTargetName !== lecterSaveTarget) {
-						addUniqueLoss(sniperTargetName);
-					}
-				}
-			}
-		}
-
-		// 3. Invincible Enquiry (GL-002: at most two successful enquiries per game)
-		const invincibleEnquiryRequested = invincible?.acts?.[dayCount] === 'yes';
-		const invincibleEnquiryGranted =
-			invincibleEnquiryRequested && canRequestInvincibleEnquiry(invincible, dayCount);
-		if (invincibleEnquiryGranted) {
-			summary.enquiry = true;
-		}
-
-		// 4. Psychologist Mute
-		const psych = playersList.find((p) => p.character === 'psychologist' && p.isAlive);
-		if (psych && psych.acts?.[dayCount] && psych.acts[dayCount] !== 'no-act') {
-			summary.silenced = psych.acts[dayCount];
-		}
-
-		// 5. Constantine Resurrection
-		summary.returned = getSuccessfulResurrection(playersList, dayCount);
-
-		const updatedPlayers = playersList.map((p) => {
-			let isAlive = p.isAlive;
-			if (summary.losses.includes(p.name)) isAlive = false;
-			if (summary.returned === p.name) isAlive = true;
-			const isInvincible = p.character === 'invincible';
-			// GL-002/GL-007 compatibility: an enquiry is consumed only when it was
-			// granted and Invincible is alive after this night. Under current
-			// resolution a granted enquiry never changes losses, so this survives
-			// value always matches the final isAlive, while a future GL-007 change
-			// that cancels the enquiry on death will automatically not consume it.
-			const enquiryUsed = isInvincible
-				? getNextInvincibleEnquiryCount({
-						player: p,
-						dayCount,
-						requested: p.name === invincible?.name && invincibleEnquiryRequested,
-						granted: p.name === invincible?.name && invincibleEnquiryGranted,
-						survives: isAlive,
-					})
-				: p.enquiryUsed;
-			return {
-				...p,
-				isAlive,
-				vulnerable: isInvincible ? invincibleVulnerable : p.vulnerable,
-				...(isInvincible ? { enquiryUsed } : null),
-			};
-		});
-
-		return { updatedPlayers, summary };
-	};
+	const concludeNight = (playersList) => resolveNightActions(playersList, dayCount);
 
 	const getSelfSaveCount = (player) => {
 		if (!player || !player.acts) return 0;

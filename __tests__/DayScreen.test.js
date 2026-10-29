@@ -149,7 +149,7 @@ describe('GL-005 Constantine public resurrection report & narration', () => {
 		});
 
 		expect(getByText('گزارش اتفاقات شب گذشته')).toBeTruthy();
-		expect(getByText('✨ بازگشت به بازی:')).toBeTruthy();
+		expect(getByText('✨ بازگشت به بازی')).toBeTruthy();
 		expect(getAllByText('بهرام').length).toBeGreaterThanOrEqual(1);
 	});
 
@@ -167,7 +167,7 @@ describe('GL-005 Constantine public resurrection report & narration', () => {
 		});
 
 		expect(getByText('گزارش اتفاقات شب گذشته')).toBeTruthy();
-		expect(getByText('✨ بازگشت به بازی:')).toBeTruthy();
+		expect(getByText('✨ بازگشت به بازی')).toBeTruthy();
 		expect(getAllByText('هیچکس').length).toBeGreaterThanOrEqual(1);
 	});
 

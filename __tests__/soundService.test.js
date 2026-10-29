@@ -9,7 +9,7 @@ describe('GL-005 Audio integration and robustness', () => {
 	});
 
 	test('playAndWait for missing audio key resolves immediately and does not hang', async () => {
-		const result = await SoundService.playAndWait('resurrection');
+		const result = await SoundService.playAndWait('something');
 		expect(result).toBeUndefined();
 	});
 
