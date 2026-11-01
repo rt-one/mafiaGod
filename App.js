@@ -89,6 +89,7 @@ function MainGame() {
 	const [dayCount, setDayCount] = useState(0);
 	const [lastNightResults, setLastNightResults] = useState(null);
 	const [gameOver, setGameOver] = useState(null); // 'CITY_WIN', 'MAFIA_WIN'
+	const [startingPlayerCount, setStartingPlayerCount] = useState(0);
 
 	// DEV:
 
@@ -133,6 +134,7 @@ function MainGame() {
 
 	const handleShuffleComplete = (assignedPlayers) => {
 		setPlayers(assignedPlayers);
+		setStartingPlayerCount(assignedPlayers.length);
 		// GL-001: evaluate the initial state right after role distribution.
 		// Under the GL-004 composition rule (city >= mafia + 1) a fresh game can
 		// never be an immediate win, but a legacy/dev roster still can.
@@ -210,6 +212,7 @@ function MainGame() {
 		setPlayers([]);
 		setSelectedChars([]);
 		setDayCount(0);
+		setStartingPlayerCount(0);
 		setLastNightResults(null);
 		setGameOver(null);
 		setGameHistory([
@@ -239,6 +242,7 @@ function MainGame() {
 			{gameState === 'DAY' && (
 				<DayScreen
 					players={players}
+					startingPlayerCount={startingPlayerCount}
 					dayCount={dayCount}
 					lastNightResults={lastNightResults}
 					gameHistory={gameHistory}

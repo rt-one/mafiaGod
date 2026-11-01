@@ -29,6 +29,7 @@ export default function DayScreen({
 	onStartNight,
 	onVoteOut,
 	gameOverState,
+	startingPlayerCount,
 }) {
 	const { theme } = useTheme();
 
@@ -57,6 +58,7 @@ export default function DayScreen({
 	const submittingVoteRef = useRef(false);
 
 	const alivePlayers = players.filter((p) => p.isAlive);
+	const hideVoteOnIntroDay = dayCount === 0 && startingPlayerCount >= 4;
 	const isThreePlayersLeft = alivePlayers.length === 3;
 	const initialVoteLimit = Math.max(0, frozenLivingCount - 1);
 	const finalVoteLimit = Math.max(0, frozenLivingCount - defenseCandidates.length);
@@ -437,7 +439,7 @@ export default function DayScreen({
 							<AppText style={[styles.btnText, { color: theme.textLight }]}>شروع ۳ نفره</AppText>
 							<AppText style={[styles.btnSubText, { color: theme.textMuted }]}>۱۸۰ ثانیه</AppText>
 						</TouchableOpacity>
-						{!votingConcludedToday && (
+						{!votingConcludedToday && !hideVoteOnIntroDay && (
 							<TouchableOpacity
 								style={[styles.btn, styles.voteContainerBtn, { borderColor: theme.danger }]}
 								onPress={openVotingModal}
@@ -458,7 +460,7 @@ export default function DayScreen({
 								اعلام شب 💤
 							</AppText>
 						</TouchableOpacity>
-						{!votingConcludedToday && (
+						{!votingConcludedToday && !hideVoteOnIntroDay && (
 							<TouchableOpacity
 								style={[styles.btn, styles.voteContainerBtn, { borderColor: theme.danger }]}
 								onPress={openVotingModal}
